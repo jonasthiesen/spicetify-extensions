@@ -7,16 +7,22 @@
 /// <reference path="./globals.d.ts" />
 
 (function QuickSwitcher() {
-  // We need to wait until the dependencies are actually ready.
+  /*********************************
+   * WAIT FOR DEPENDENCIES TO LOAD *
+   *********************************/
+
   const dependencies = [
     Spicetify.Keyboard,
   ]
 
-  // If we have a missing dependency, try again a bit later.
   if (dependencies.filter(d => !d).length > 0) {
     setTimeout(QuickSwitcher, 1000)
     return
   }
+
+  /******************
+   * CORE EXTENSION *
+   ******************/
 
   let memory = {
     quickSwitcherInDOM: false,
@@ -34,6 +40,7 @@
     let quickSwitcher = null
     let quickSwitcherInput = null
     if (!memory.quickSwitcherInDOM) {
+      // Qucik switcher container
       quickSwitcher = document.createElement('div')
       quickSwitcher.id = QUICK_SWITCHER_ID.replace('#', '')
       addStyle(quickSwitcher, {
@@ -44,11 +51,15 @@
         zIndex: '100'
       })
 
+      // Quick switcher input
       quickSwitcherInput = document.createElement('input')
       addStyle(quickSwitcherInput, {
         position: 'absolute',
-        width: '300px',
-        padding: '10px',
+        border: 'none',
+        outline: 0,
+        fontSize: '20px',
+        width: '400px',
+        padding: '16px',
         top: '150px',
         left: '0',
         right: '0',
@@ -85,8 +96,18 @@
         let searchTerm = event.target.value
         let results = filterList(searchTerm, playlists)
 
+        // Reset styles
         playlistNodes.map(x => addStyle(x, { backgroundColor: 'inherit', zIndex: 'auto' }))
-        playlistNodes.filter(x => results.map(x => x.id).includes(x.getAttribute('href')) && searchTerm.length > 0).map(x => addStyle(x, { backgroundColor: '#ff0000 !important', zIndex: '9999 !important' }))
+
+        // Add styles to relevant list items
+        playlistNodes.filter(x => results
+          .map(x => x.id)
+          .includes(x.getAttribute('href')) && searchTerm.length > 0
+        ).map(x => addStyle(x, {
+          backgroundColor: '#2E66F4 !important',
+          zIndex: '9999 !important',
+          borderRadius: '10px',
+        }))
       }
 
       function handleSelectPlaylist(event) {
@@ -125,16 +146,24 @@
     }
   }
 
+  /*************************
+   * REGISTER KEY BINDINGS *
+   *************************/
+
   registerBind({
     keyName: 'K',
     cmd: true,
   }, toggleQuickSwitcher)
 
+  /*********************
+   * UTILITY FUNCTIONS *
+   *********************/
+
   /**
    * Register a keyboard shortcut.
    */
   function registerBind({ keyName, cmd = false, shift = false, alt = false }, callback) {
-    if (typeof keyName === "string") {
+    if (typeof keyName === 'string') {
       keyName = Spicetify.Keyboard.KEYS[keyName];
     }
 
