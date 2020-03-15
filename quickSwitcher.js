@@ -61,11 +61,15 @@
         width: '400px',
         padding: '16px',
         top: '150px',
+        fontSize: '19px',
         left: '0',
         right: '0',
         marginLeft: 'auto',
         marginRight: 'auto',
-        borderRadius: '10px',
+        borderRadius: '3px',
+        outline: '0',
+        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.45)',
+        border: '1px solid #FFFFFF'
       })
 
       quickSwitcher.appendChild(quickSwitcherInput)
