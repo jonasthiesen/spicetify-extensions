@@ -66,10 +66,7 @@
         marginLeft: 'auto',
         marginRight: 'auto',
         borderRadius: '3px',
-        fontSize: '20px',
-        outline: '0',
         boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.45)',
-        border: '1px solid #FFFFFF'
       })
 
       quickSwitcher.appendChild(quickSwitcherInput)
