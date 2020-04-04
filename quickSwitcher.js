@@ -34,8 +34,16 @@
     const PLAYLIST_SELECTOR = '.SidebarListItemLink'
 
     const playlistNodes = [...document.querySelectorAll(PLAYLIST_SELECTOR)]
-    const playlists = playlistNodes
-      .map(x => ({ title: x.textContent, id: x.getAttribute('href') }))
+    var playlists = []
+    new Promise((resolve, reject) => {
+      Spicetify.CosmosAPI.resolver.get("sp://core-playlist/v1/rootlist", (err, raw) => {
+        const response = JSON.parse(raw._body);
+        resolve(response);
+      });
+    }).then(response => {
+      const formatLink = (link) => ("spotify:app:playlist:"+link.split(':').pop());
+      playlists = (response.rows.map(row => ({ title: row.name, id: formatLink(row.link)})));
+    });
 
     let quickSwitcher = null
     let quickSwitcherInput = null
@@ -66,7 +74,10 @@
         marginLeft: 'auto',
         marginRight: 'auto',
         borderRadius: '3px',
+        fontSize: '19px',
+        outline: '0',
         boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.45)',
+        border: '1px solid #FFFFFF'
       })
 
       quickSwitcher.appendChild(quickSwitcherInput)
