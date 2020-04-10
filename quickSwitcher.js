@@ -54,7 +54,7 @@
       });
     }).then(response => {
       const formatLink = (link) => ("spotify:app:playlist:"+link.split(':').pop());
-      playlists = playlists.concat(response.rows.map(row => ({ title: row.name, id: formatLink(row.link)} )));
+      playlists = playlists.concat(response.rows.map(row => ({ title: row.name, id: formatLink(row.link) })));
     });
 
     let quickSwitcher = null
