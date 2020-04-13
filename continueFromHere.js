@@ -31,10 +31,16 @@
 
   function handleContinueFromHere(uris) {
     const [nextSong] = uris
-    const button = getPlayTrackButton(nextSong)
+    const trackRow = getPlayTrackRow(nextSong)
 
     Spicetify.Player.addEventListener('songchange', function _listener() {
-      button.click()
+      const mouseEvent = new MouseEvent('dblclick', {
+        view: window,
+        bubbles: true,
+        cancelable: true,
+      })
+
+      trackRow.dispatchEvent(mouseEvent)
 
       Spicetify.Player.removeEventListener('songchange', _listener)
     })
@@ -61,19 +67,25 @@
     return false
   }
 
-  function getPlayTrackButton(trackId) {
+  function getPlayTrackRow(trackId) {
     const container = 'iframe.active'
-    const trackTable = '.tracklist-playlist'
+    const trackTable = '[class*="tracklist-"]'
     const trackRow = `[data-uri="${trackId}"]`
-    const trackButton = '.tl-play button'
 
-    console.log('IFRAMES', document.querySelectorAll(container))
+    const albumTable = '.Table__table'
+    const albumRow = `[data-ta-uri="${trackId}"]`
 
-    return document
-      .querySelector(container)
+    const documentContainer = document.querySelector(container)
+    if (documentContainer == null) {
+      console.log(document.querySelector(albumTable).querySelector(albumRow))
+      return document
+        .querySelector(albumTable)
+        .querySelector(albumRow)
+    }
+
+    return documentContainer
       .contentDocument
       .querySelector(trackTable)
       .querySelector(trackRow)
-      .querySelector(trackButton)
   }
 })();
