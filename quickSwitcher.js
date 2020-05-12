@@ -6,12 +6,14 @@
 
 /// <reference path="./globals.d.ts" />
 
-(function QuickSwitcher() {
+(async function QuickSwitcher() {
+
   /*********************************
    * WAIT FOR DEPENDENCIES TO LOAD *
    *********************************/
 
   const dependencies = [
+    window['SpicetifyModuleLoader'],
     Spicetify.Keyboard,
   ]
 
@@ -20,9 +22,14 @@
     return
   }
 
+  // Get the module loader
+  const { use } = window['SpicetifyModuleLoader']
+
   /******************
    * CORE EXTENSION *
    ******************/
+
+  const Fuse = (await use('fuse.js')).default
 
   let memory = {
     quickSwitcherInDOM: false,
@@ -108,9 +115,9 @@
       memory.quickSwitcherOpen = true
 
       function filterList(needle, haystack) {
-        let searchTerm = needle.toLowerCase()
-        let results = haystack.filter(({ title }) => title.toLowerCase().includes(searchTerm))
-        return results
+        return fuzzy(haystack)
+          .search(needle)
+          .map(({ item }) => item)
       }
 
       function filterPlaylistsInSearch(event) {
@@ -150,6 +157,7 @@
       quickSwitcherInput.addEventListener('input', filterPlaylistsInSearch)
       quickSwitcherInput.addEventListener('keydown', handleSelectPlaylist)
 
+      // @ts-ignore
       quickSwitcher.addEventListener('keydown', function _listener({ key }) {
         if (key === 'Escape') {
           closeQuickSwitcher(_listener)
@@ -239,5 +247,17 @@
 
   function removeEmpty(x) {
     return x && x.length
+  }
+
+  /**
+   * Fuzzy search on the title of the playlist/album/etc.
+   * 
+   * @param {any[]} playlists The playlists to fuzzy search.
+   * @returns Fuse instance (use .search()) to actually perform the search.
+   */
+  function fuzzy (playlists) {
+    // Threshold of 0.4 feels about right, default is 0.6.
+    // 0.0 = perfect match; 1.0 = match on everything.
+    return new Fuse(playlists, { keys: ['title'], threshold: 0.4 })
   }
 })();
