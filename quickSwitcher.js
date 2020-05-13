@@ -29,15 +29,23 @@
    * CORE EXTENSION *
    ******************/
 
+  const { take } = await use('ramda')
   const Fuse = (await use('fuse.js')).default
 
   let memory = {
     quickSwitcherInDOM: false,
     quickSwitcherOpen: false,
+    selectedSearchResult: 0,
+    searchResultCount: 0,
+  }
+
+  let domRefs = {
+    searchResults: [],
   }
 
   function toggleQuickSwitcher() {
     const QUICK_SWITCHER_ID = '#quick-switcher'
+    const QUICK_SWITCHER_RESULT_CONTAINER_ID = '#quick-switcher-result-container'
     const PLAYLIST_SELECTOR = '.SidebarListItemLink'
 
     const playlistNodes = [...document.querySelectorAll(PLAYLIST_SELECTOR)]
@@ -66,6 +74,7 @@
 
     let quickSwitcher = null
     let quickSwitcherInput = null
+    let quickSwitcherResultContainer = null
     if (!memory.quickSwitcherInDOM) {
       // Qucik switcher container
       quickSwitcher = document.createElement('div')
@@ -96,13 +105,35 @@
         boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.45)',
       })
 
+      // Quick switcher result container
+      quickSwitcherResultContainer = document.createElement('div')
+      quickSwitcherResultContainer.id = QUICK_SWITCHER_RESULT_CONTAINER_ID.replace('#', '')
+      addStyle(quickSwitcherResultContainer, {
+        position: 'absolute',
+        flexDirection: 'column',
+        display: 'none',
+        backgroundColor: '#fff',
+        fontSize: '16px',
+        width: '400px',
+        overflow: 'hidden',
+        top: '212px',
+        left: '0',
+        right: '0',
+        marginLeft: 'auto',
+        marginRight: 'auto',
+        borderRadius: '3px',
+        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.45)',
+      })
+
       quickSwitcher.appendChild(quickSwitcherInput)
+      quickSwitcher.appendChild(quickSwitcherResultContainer)
       document.body.appendChild(quickSwitcher)
 
       memory.quickSwitcherInDOM = true
     } else {
       quickSwitcher = document.querySelector(QUICK_SWITCHER_ID)
       quickSwitcherInput = quickSwitcher.querySelector('input')
+      quickSwitcherResultContainer = quickSwitcher.querySelector(QUICK_SWITCHER_RESULT_CONTAINER_ID)
     }
 
     if (memory.quickSwitcherOpen) {
@@ -121,21 +152,39 @@
       }
 
       function filterPlaylistsInSearch(event) {
+        memory.selectedSearchResult = 0
+
         let searchTerm = event.target.value
-        let results = filterList(searchTerm, playlists)
+        let results = take(10, filterList(searchTerm, playlists))
+
+        memory.searchResultCount = results.length
 
         // Reset styles
         playlistNodes.map(x => addStyle(x, { backgroundColor: 'inherit', zIndex: 'auto' }))
 
-        // Add styles to relevant list items
-        playlistNodes.filter(x => results
-          .map(x => x.id)
-          .includes(x.getAttribute('href')) && searchTerm.length > 0
-        ).map(x => addStyle(x, {
-          backgroundColor: '#2E66F4 !important',
-          zIndex: '9999 !important',
-          borderRadius: '10px',
-        }))
+        if (results.length === 0) {
+          addStyle(quickSwitcherResultContainer, { display: 'none' })
+        } else {
+          addStyle(quickSwitcherResultContainer, { display: 'flex' })
+        }
+
+        // Reset search results (remove all children)
+        quickSwitcherResultContainer.innerHTML = ''
+
+        domRefs.searchResults = results.map((result, index) => {
+          let searchResult = document.createElement('li')
+          searchResult.innerText = result.title
+
+          addStyle(searchResult, { padding: '12px', color: '#000', listStyleType: 'none' })
+
+          if (index === memory.selectedSearchResult) {
+            addStyle(searchResult, { backgroundColor: '#2E66F4', color: '#fff' })
+          }
+
+          quickSwitcherResultContainer.appendChild(searchResult)
+
+          return searchResult
+        })
       }
 
       function handleSelectPlaylist(event) {
@@ -145,12 +194,34 @@
 
           if (results.length > 0) {
             let el = document.createElement('a')
-            el.setAttribute('href', results[0].id)
+            el.setAttribute('href', results[memory.selectedSearchResult].id)
             document.body.appendChild(el)
             el.click()
             document.body.removeChild(el)
             closeQuickSwitcher()
           }
+        }
+
+        const currentSelected = memory.selectedSearchResult
+        if (event.key === 'ArrowDown') {
+          if (memory.selectedSearchResult < memory.searchResultCount - 1) {
+            memory.selectedSearchResult++
+          } else {
+            memory.selectedSearchResult = 0
+          }
+        }
+
+        if (event.key === 'ArrowUp') {
+          if (memory.selectedSearchResult > 0) {
+            memory.selectedSearchResult--
+          } else {
+            memory.selectedSearchResult = memory.searchResultCount - 1
+          }
+        }
+
+        if (currentSelected !== memory.selectedSearchResult) {
+          domRefs.searchResults.forEach(domNode => addStyle(domNode, { backgroundColor: '#fff', color: '#000' }))
+          addStyle(domRefs.searchResults[memory.selectedSearchResult], { backgroundColor: '#2E66F4', color: '#fff' })
         }
       }
 
