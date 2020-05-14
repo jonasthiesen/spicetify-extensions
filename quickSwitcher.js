@@ -15,6 +15,7 @@
   const dependencies = [
     window['SpicetifyModuleLoader'],
     Spicetify.Keyboard,
+    Spicetify.LocalStorage,
   ]
 
   if (dependencies.filter(d => !d).length > 0) {
@@ -29,7 +30,7 @@
    * CORE EXTENSION *
    ******************/
 
-  const { take } = await use('ramda')
+  const { take, takeLast } = await use('ramda')
   const Fuse = (await use('fuse.js')).default
 
   let memory = {
@@ -37,6 +38,7 @@
     quickSwitcherOpen: false,
     selectedSearchResult: 0,
     searchResultCount: 0,
+    hasBeenOpened: false,
   }
 
   let domRefs = {
@@ -154,8 +156,15 @@
       function filterPlaylistsInSearch(event) {
         memory.selectedSearchResult = 0
 
-        let searchTerm = event.target.value
-        let results = take(10, filterList(searchTerm, playlists))
+        let results = []
+        if (event) {
+          let searchTerm = event.target.value
+          results = take(10, filterList(searchTerm, playlists))
+        }
+
+        if (results.length === 0) {
+          results = take(10, getRecentlySearched())
+        }
 
         memory.searchResultCount = results.length
 
@@ -189,8 +198,13 @@
 
       function handleSelectPlaylist(event) {
         if (event.key === 'Enter') {
-          let searchTerm = event.target.value
-          let results = filterList(searchTerm, playlists)
+          let results = []
+          if (event.target.value) {
+            let searchTerm = event.target.value
+            results = filterList(searchTerm, playlists)
+          } else {
+            results = getRecentlySearched()
+          }
 
           if (results.length > 0) {
             let el = document.createElement('a')
@@ -199,6 +213,8 @@
             el.click()
             document.body.removeChild(el)
             closeQuickSwitcher()
+
+            storeRecentlySearched(results[memory.selectedSearchResult])
           }
         }
 
@@ -225,6 +241,10 @@
         }
       }
 
+      if (!memory.hasBeenOpened) {
+        filterPlaylistsInSearch()
+        memory.hasBeenOpened = true
+      }
       quickSwitcherInput.addEventListener('input', filterPlaylistsInSearch)
       quickSwitcherInput.addEventListener('keydown', handleSelectPlaylist)
 
@@ -326,9 +346,42 @@
    * @param {any[]} playlists The playlists to fuzzy search.
    * @returns Fuse instance (use .search()) to actually perform the search.
    */
-  function fuzzy (playlists) {
+  function fuzzy(playlists) {
     // Threshold of 0.4 feels about right, default is 0.6.
     // 0.0 = perfect match; 1.0 = match on everything.
     return new Fuse(playlists, { keys: ['title'], threshold: 0.4 })
+  }
+
+  function removeDuplicates(array, key) {
+    let lookup = {}
+
+    return array.filter(obj => {
+      if (!lookup[obj[key]]) {
+        lookup[obj[key]] = true
+        return true
+      }
+      return false
+    })
+}
+
+  /**
+   * Retrieve recently searched from LocalStorage.
+   */
+  function getRecentlySearched() {
+    return JSON.parse(Spicetify.LocalStorage.get(
+      "RecentlySearched"
+    )) || []
+  }
+
+  /**
+   * Store recently search in LocalStorage.
+   */
+  function storeRecentlySearched(recentlySearched) {
+    const uniqueSearches = removeDuplicates([recentlySearched, ...getRecentlySearched()], 'title')
+
+    Spicetify.LocalStorage.set(
+      "RecentlySearched",
+      JSON.stringify(uniqueSearches)
+    );
   }
 })();
