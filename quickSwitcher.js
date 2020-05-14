@@ -30,7 +30,7 @@
    * CORE EXTENSION *
    ******************/
 
-  const { take, takeLast } = await use('ramda')
+  const { take } = await use('ramda')
   const Fuse = (await use('fuse.js')).default
 
   let memory = {
