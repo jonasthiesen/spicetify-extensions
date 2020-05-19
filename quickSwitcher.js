@@ -144,6 +144,7 @@
       quickSwitcherInput.focus()
       quickSwitcherInput.select()
       memory.quickSwitcherOpen = true
+      setTimeout(() => { quickSwitcherInput.value = "" }, 1) 
 
       function filterList(needle, haystack) {
         return fuzzy(haystack)
@@ -251,8 +252,7 @@
    *************************/
 
   registerBind({
-    keyName: 'K',
-    cmd: true,
+    keyName: 'F',
   }, toggleQuickSwitcher)
 
   /*********************
