@@ -103,7 +103,7 @@
         right: '0',
         marginLeft: 'auto',
         marginRight: 'auto',
-        borderRadius: '3px',
+        borderRadius: '12px',
         boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.45)',
       })
 
@@ -123,7 +123,7 @@
         right: '0',
         marginLeft: 'auto',
         marginRight: 'auto',
-        borderRadius: '3px',
+        borderRadius: '12px',
         boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.45)',
       })
 
@@ -184,7 +184,7 @@
           let searchResult = document.createElement('li')
           searchResult.innerText = result.title
 
-          addStyle(searchResult, { padding: '12px', color: '#000', listStyleType: 'none' })
+          addStyle(searchResult, { padding: '12px', color: '#000', listStyleType: 'none', borderRadius: '8px', margin: '4px' })
 
           if (index === memory.selectedSearchResult) {
             addStyle(searchResult, { backgroundColor: '#2E66F4', color: '#fff' })
